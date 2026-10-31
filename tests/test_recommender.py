@@ -142,12 +142,54 @@ def test_recommendations_are_ranked_by_score():
         "target_instrumentalness": 0.05,
         "target_speechiness": 0.05,
     }
-    recommendations = recommend_songs(
-        preferences, load_songs("data/songs.csv"), k=5
+    songs = load_songs("data/songs.csv")
+
+    for mode in ("genre-first", "mood-first"):
+        recommendations = recommend_songs(preferences, songs, k=5, mode=mode)
+
+        assert len(recommendations) == 5
+        assert all(
+            recommendations[index][1] >= recommendations[index + 1][1]
+            for index in range(len(recommendations) - 1)
+        )
+
+
+def test_scoring_modes_prioritize_their_named_preference():
+    preferences = {
+        "favorite_genre": "pop",
+        "favorite_mood": "happy",
+        "target_energy": 0.9,
+    }
+    base_song = load_songs("data/songs.csv")[0]
+    genre_match = {**base_song, "genre": "pop", "mood": "curious"}
+    mood_match = {**base_song, "genre": "other", "mood": "happy"}
+
+    genre_score, genre_reasons = score_song(
+        preferences, genre_match, mode="genre-first"
+    )
+    mood_only_score, _ = score_song(preferences, mood_match, mode="genre-first")
+    genre_first_results = recommend_songs(
+        preferences, [genre_match, mood_match], k=2, mode="genre-first"
     )
 
-    assert len(recommendations) == 5
-    assert all(
-        recommendations[index][1] >= recommendations[index + 1][1]
-        for index in range(len(recommendations) - 1)
+    assert genre_score - mood_only_score == 1.0
+    assert genre_first_results[0][0] == genre_match
+    assert "genre match (+2.0)" in genre_reasons
+    assert "mood mismatch (+0.0)" in genre_reasons
+
+    mood_first_genre_score, mood_first_genre_reasons = score_song(
+        preferences, genre_match, mode="mood-first"
     )
+    mood_score, mood_reasons = score_song(
+        preferences, mood_match, mode="mood-first"
+    )
+    mood_first_results = recommend_songs(
+        preferences, [genre_match, mood_match], k=2, mode="mood-first"
+    )
+
+    assert mood_score - mood_first_genre_score == 1.0
+    assert mood_first_results[0][0] == mood_match
+    assert "genre match (+1.0)" in mood_first_genre_reasons
+    assert "mood mismatch (+0.0)" in mood_first_genre_reasons
+    assert "genre mismatch (+0.0)" in mood_reasons
+    assert "mood match (+2.0)" in mood_reasons

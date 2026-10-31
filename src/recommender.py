@@ -31,6 +31,29 @@ class UserProfile:
     target_energy: float
     likes_acoustic: bool
 
+
+@dataclass(frozen=True)
+class ScoringStrategy:
+    """Weights genre and mood matches while sharing the other scoring rules."""
+
+    name: str
+    genre_weight: float
+    mood_weight: float
+
+    def score_category_matches(
+        self, genre_match: bool, mood_match: bool
+    ) -> Tuple[float, float]:
+        genre_score = self.genre_weight if genre_match else 0.0
+        mood_score = self.mood_weight if mood_match else 0.0
+        return genre_score, mood_score
+
+
+SCORING_STRATEGIES = {
+    "genre-first": ScoringStrategy("Genre-First", genre_weight=2.0, mood_weight=1.0),
+    "mood-first": ScoringStrategy("Mood-First", genre_weight=1.0, mood_weight=2.0),
+}
+
+
 class Recommender:
     """
     OOP implementation of the recommendation logic.
@@ -72,14 +95,28 @@ def load_songs(csv_path: str) -> List[Dict]:
             songs.append(row)
     return songs
 
-def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
+def _get_scoring_strategy(mode: str) -> ScoringStrategy:
+    normalized_mode = mode.strip().lower()
+    try:
+        return SCORING_STRATEGIES[normalized_mode]
+    except KeyError:
+        available_modes = ", ".join(SCORING_STRATEGIES)
+        raise ValueError(
+            f"Unknown scoring mode {mode!r}. Choose one of: {available_modes}."
+        ) from None
+
+
+def _score_song(
+    user_prefs: Dict, song: Dict, strategy: ScoringStrategy
+) -> Tuple[float, List[str]]:
     """Score a song against user preferences and explain the score."""
     genre_match = song["genre"] == user_prefs["favorite_genre"]
     mood_match = song["mood"] == user_prefs["favorite_mood"]
     energy_similarity = 1 - abs(song["energy"] - user_prefs["target_energy"])
 
-    genre_score = 2.0 if genre_match else 0.0
-    mood_score = 1.0 if mood_match else 0.0
+    genre_score, mood_score = strategy.score_category_matches(
+        genre_match, mood_match
+    )
     energy_score = energy_similarity
 
     target_popularity = user_prefs.get("target_popularity", 50)
@@ -139,11 +176,25 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     ]
     return score, reasons
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
+
+def score_song(
+    user_prefs: Dict, song: Dict, mode: str = "genre-first"
+) -> Tuple[float, List[str]]:
+    """Score one song with the selected mode and explain its contributions."""
+    return _score_song(user_prefs, song, _get_scoring_strategy(mode))
+
+
+def recommend_songs(
+    user_prefs: Dict,
+    songs: List[Dict],
+    k: int = 5,
+    mode: str = "genre-first",
+) -> List[Tuple[Dict, float, str]]:
     """Rank songs by score and return the top recommendations."""
+    strategy = _get_scoring_strategy(mode)
     scored_songs = []
     for song in songs:
-        score, reasons = score_song(user_prefs, song)
+        score, reasons = _score_song(user_prefs, song, strategy)
         scored_songs.append((song, score, "; ".join(reasons)))
 
     return sorted(scored_songs, key=lambda recommendation: recommendation[1], reverse=True)[:k]

@@ -9,10 +9,24 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
-from recommender import load_songs, recommend_songs
+import argparse
+
+if __package__:
+    from .recommender import load_songs, recommend_songs
+else:
+    from recommender import load_songs, recommend_songs
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Recommend songs by scoring mode.")
+    parser.add_argument(
+        "--mode",
+        choices=("genre-first", "mood-first"),
+        default="genre-first",
+        help="Ranking strategy to use (default: genre-first).",
+    )
+    mode = parser.parse_args().mode
+
     songs = load_songs("data/songs.csv") 
 
     profiles = [
@@ -57,8 +71,9 @@ def main() -> None:
         ),
     ]
 
+    print(f"Scoring mode: {mode.title()}")
     for profile_name, user_prefs in profiles:
-        recommendations = recommend_songs(user_prefs, songs, k=5)
+        recommendations = recommend_songs(user_prefs, songs, k=5, mode=mode)
 
         print(
             f"\nTop recommendations for {profile_name} "
