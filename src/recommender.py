@@ -58,7 +58,16 @@ def load_songs(csv_path: str) -> List[Dict]:
         for row in csv.DictReader(csv_file):
             row["id"] = int(row["id"])
             row["tempo_bpm"] = int(row["tempo_bpm"])
-            for field in ("energy", "valence", "danceability", "acousticness"):
+            row["popularity"] = int(row["popularity"])
+            row["release_decade"] = int(row["release_decade"])
+            for field in (
+                "energy",
+                "valence",
+                "danceability",
+                "acousticness",
+                "instrumentalness",
+                "speechiness",
+            ):
                 row[field] = float(row[field])
             songs.append(row)
     return songs
@@ -72,12 +81,61 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     genre_score = 2.0 if genre_match else 0.0
     mood_score = 1.0 if mood_match else 0.0
     energy_score = energy_similarity
-    score = genre_score + mood_score + energy_score
+
+    target_popularity = user_prefs.get("target_popularity", 50)
+    preferred_release_decade = user_prefs.get("preferred_release_decade")
+    preferred_detailed_mood = user_prefs.get("preferred_detailed_mood")
+    target_instrumentalness = user_prefs.get("target_instrumentalness", 0.5)
+    target_speechiness = user_prefs.get("target_speechiness", 0.5)
+
+    popularity_score = 0.4 * (1 - abs(song["popularity"] - target_popularity) / 100)
+    release_decade_score = (
+        0.4 if song["release_decade"] == preferred_release_decade else 0.0
+    )
+    detailed_mood_score = (
+        0.6 if song["detailed_mood"] == preferred_detailed_mood else 0.0
+    )
+    instrumentalness_score = 0.3 * (
+        1 - abs(song["instrumentalness"] - target_instrumentalness)
+    )
+    speechiness_score = 0.3 * (1 - abs(song["speechiness"] - target_speechiness))
+
+    if preferred_release_decade is None:
+        release_decade_result = "not specified"
+    elif release_decade_score:
+        release_decade_result = "match"
+    else:
+        release_decade_result = "mismatch"
+
+    if preferred_detailed_mood is None:
+        detailed_mood_result = "not specified"
+    elif detailed_mood_score:
+        detailed_mood_result = "match"
+    else:
+        detailed_mood_result = "mismatch"
+
+    score = (
+        genre_score
+        + mood_score
+        + energy_score
+        + popularity_score
+        + release_decade_score
+        + detailed_mood_score
+        + instrumentalness_score
+        + speechiness_score
+    )
 
     reasons = [
         f"genre {'match' if genre_match else 'mismatch'} (+{genre_score:.1f})",
         f"mood {'match' if mood_match else 'mismatch'} (+{mood_score:.1f})",
         f"energy similarity (+{energy_score:.1f})",
+        f"popularity similarity (+{popularity_score:.1f})",
+        f"release decade {release_decade_result} "
+        f"(+{release_decade_score:.1f})",
+        f"detailed mood {detailed_mood_result} "
+        f"(+{detailed_mood_score:.1f})",
+        f"instrumentalness similarity (+{instrumentalness_score:.1f})",
+        f"speechiness similarity (+{speechiness_score:.1f})",
     ]
     return score, reasons
 

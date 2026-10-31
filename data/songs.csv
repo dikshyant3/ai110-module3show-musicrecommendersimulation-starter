@@ -1,19 +1,19 @@
-id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
-1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18
-2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71
-3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10
-4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86
-5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05
-6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92
-7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89
-8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
-9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
-10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
-11,Dust & Denim,Cedar Vale,country,nostalgic,0.55,96,0.68,0.63,0.72
-12,Velvet Waltz,Mira Sol,classical,romantic,0.24,68,0.67,0.31,0.94
-13,Concrete Bloom,Northline,hip-hop,confident,0.81,96,0.68,0.87,0.12
-14,Island Signal,Coastline Dub,reggae,carefree,0.64,102,0.82,0.78,0.35
-15,Glass Cathedral,Ashes Awake,metal,cathartic,0.96,168,0.31,0.49,0.03
-16,Lunar Postcard,Aster Vale,folk,wistful,0.38,84,0.46,0.45,0.91
-17,Neon Mirage,Sora Static,k-pop,playful,0.88,126,0.91,0.91,0.08
-18,Blue Hour Train,Quiet Meridian,blues,melancholic,0.33,74,0.29,0.40,0.77
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness,popularity,release_decade,detailed_mood,instrumentalness,speechiness
+1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18,82,2020,euphoric,0.00,0.05
+2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71,58,2020,cozy,0.18,0.04
+3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10,71,2010,defiant,0.00,0.06
+4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86,44,2020,serene,0.22,0.04
+5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05,86,2020,triumphant,0.00,0.08
+6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92,39,2010,meditative,0.91,0.03
+7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89,52,2010,intimate,0.12,0.05
+8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22,64,2010,nocturnal,0.06,0.04
+9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78,61,2020,focused,0.35,0.03
+10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35,69,2020,radiant,0.00,0.05
+11,Dust & Denim,Cedar Vale,country,nostalgic,0.55,96,0.68,0.63,0.72,48,2000,homesick,0.03,0.04
+12,Velvet Waltz,Mira Sol,classical,romantic,0.24,68,0.67,0.31,0.94,41,2010,tender,0.89,0.04
+13,Concrete Bloom,Northline,hip-hop,confident,0.81,96,0.68,0.87,0.12,78,2020,assertive,0.02,0.14
+14,Island Signal,Coastline Dub,reggae,carefree,0.64,102,0.82,0.78,0.35,57,2010,carefree,0.00,0.05
+15,Glass Cathedral,Ashes Awake,metal,cathartic,0.96,168,0.31,0.49,0.03,59,2020,rebellious,0.04,0.07
+16,Lunar Postcard,Aster Vale,folk,wistful,0.38,84,0.46,0.45,0.91,43,2010,reflective,0.32,0.04
+17,Neon Mirage,Sora Static,k-pop,playful,0.88,126,0.91,0.91,0.08,88,2020,exuberant,0.00,0.12
+18,Blue Hour Train,Quiet Meridian,blues,melancholic,0.33,74,0.29,0.40,0.77,46,2000,sorrowful,0.05,0.04

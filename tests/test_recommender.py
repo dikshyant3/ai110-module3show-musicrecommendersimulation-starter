@@ -1,4 +1,11 @@
-from src.recommender import Song, UserProfile, Recommender
+from src.recommender import (
+    Recommender,
+    Song,
+    UserProfile,
+    load_songs,
+    recommend_songs,
+    score_song,
+)
 
 def make_small_recommender() -> Recommender:
     songs = [
@@ -59,3 +66,88 @@ def test_explain_recommendation_returns_non_empty_string():
     explanation = rec.explain_recommendation(user, song)
     assert isinstance(explanation, str)
     assert explanation.strip() != ""
+
+
+def test_load_songs_converts_advanced_attributes():
+    songs = load_songs("data/songs.csv")
+
+    assert len(songs) == 18
+    for song in songs:
+        assert isinstance(song["popularity"], int)
+        assert 0 <= song["popularity"] <= 100
+        assert isinstance(song["release_decade"], int)
+        assert isinstance(song["detailed_mood"], str)
+        assert isinstance(song["instrumentalness"], float)
+        assert 0 <= song["instrumentalness"] <= 1
+        assert isinstance(song["speechiness"], float)
+        assert 0 <= song["speechiness"] <= 1
+        assert isinstance(song["danceability"], float)
+        assert isinstance(song["acousticness"], float)
+
+
+def test_score_song_accepts_existing_preferences():
+    preferences = {
+        "favorite_genre": "pop",
+        "favorite_mood": "happy",
+        "target_energy": 0.9,
+    }
+
+    score, reasons = score_song(preferences, load_songs("data/songs.csv")[0])
+
+    assert score > 0
+    assert any("not specified" in reason for reason in reasons)
+
+
+def test_each_advanced_attribute_changes_song_score():
+    preferences = {
+        "favorite_genre": "pop",
+        "favorite_mood": "happy",
+        "target_energy": 0.9,
+        "target_popularity": 80,
+        "preferred_release_decade": 2020,
+        "preferred_detailed_mood": "euphoric",
+        "target_instrumentalness": 0.05,
+        "target_speechiness": 0.05,
+    }
+    song = load_songs("data/songs.csv")[0]
+    original_score, reasons = score_song(preferences, song)
+
+    changed_attributes = {
+        "popularity": 0,
+        "release_decade": 2010,
+        "detailed_mood": "wistful",
+        "instrumentalness": 0.9,
+        "speechiness": 0.9,
+    }
+    for attribute, changed_value in changed_attributes.items():
+        changed_song = {**song, attribute: changed_value}
+        changed_score, _ = score_song(preferences, changed_song)
+        assert changed_score < original_score
+
+    assert any("popularity" in reason for reason in reasons)
+    assert any("release decade" in reason for reason in reasons)
+    assert any("detailed mood" in reason for reason in reasons)
+    assert any("instrumentalness" in reason for reason in reasons)
+    assert any("speechiness" in reason for reason in reasons)
+
+
+def test_recommendations_are_ranked_by_score():
+    preferences = {
+        "favorite_genre": "pop",
+        "favorite_mood": "happy",
+        "target_energy": 0.9,
+        "target_popularity": 80,
+        "preferred_release_decade": 2020,
+        "preferred_detailed_mood": "euphoric",
+        "target_instrumentalness": 0.05,
+        "target_speechiness": 0.05,
+    }
+    recommendations = recommend_songs(
+        preferences, load_songs("data/songs.csv"), k=5
+    )
+
+    assert len(recommendations) == 5
+    assert all(
+        recommendations[index][1] >= recommendations[index + 1][1]
+        for index in range(len(recommendations) - 1)
+    )

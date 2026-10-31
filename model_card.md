@@ -8,19 +8,19 @@
 
 ## 2. Goal, Intended Use, and Non-Intended Use
 
-VibeMatch ranks songs for a listener using their favorite genre, favorite mood, and target energy. It is designed for classroom experiments that show how preferences and scoring rules affect recommendations. It assumes the listener can be described by those three preferences. It is not intended for real-world music discovery or decisions about people; the catalog is small, and the scoring rules have not been tested with listeners.
+VibeMatch ranks songs for a listener using genre, mood, energy, popularity, release decade, detailed mood, instrumentalness, and speechiness preferences. It is designed for classroom experiments that show how preferences and scoring rules affect recommendations. It is not intended for real-world music discovery or decisions about people; the catalog is small, the values are simulated, and the scoring rules have not been tested with listeners.
 
 ---
 
 ## 3. Algorithm Summary
 
-The system gives a song 2 points when its genre matches the listener's favorite genre, and 1 point when its mood matches. It adds energy similarity: one minus the absolute difference between the song's energy and the listener's target energy. The total is the song's score; the system returns the highest-scoring songs and reports the matching reasons. The scorer uses only genre, mood, and energy.
+The system gives a song 2 points for a genre match and 1 point for a mood match, then adds energy similarity. It also adds popularity similarity (weighted by 0.4), an exact release-decade match (0.4), an exact detailed-mood match (0.6), instrumentalness similarity (weighted by 0.3), and speechiness similarity (weighted by 0.3). Similarity is one minus the absolute difference for 0-to-1 features, and one minus the absolute popularity difference divided by 100. The total score is not normalized; the system returns the highest-scoring songs and reports the contribution of every feature.
 
 ---
 
 ## 4. Data Used
 
-The CSV catalog contains 18 songs. Each row has a title, artist, genre, mood, energy, tempo, valence, danceability, and acousticness, as well as an ID. The catalog has 15 genres and 14 moods. Lofi appears 3 times, pop appears 2 times, and the other 13 genres appear once each. Chill appears 3 times, happy and intense appear twice each, and the other 11 moods appear once each. Song energy ranges from 0.24 to 0.96. The scorer does not use tempo, valence, danceability, or acousticness, and the small catalog has few alternatives for most genres and moods.
+The CSV catalog contains 18 songs. Each row has a title, artist, genre, mood, energy, tempo, valence, danceability, acousticness, popularity, release decade, detailed mood, instrumentalness, and speechiness, as well as an ID. The catalog has 15 genres and 14 moods. Lofi appears 3 times, pop appears 2 times, and the other 13 genres appear once each. Chill appears 3 times, happy and intense appear twice each, and the other 11 moods appear once each. Song energy ranges from 0.24 to 0.96; popularity ranges from 39 to 88; release decades span 2000 to 2020. All five advanced features are used by the scorer. Tempo, valence, danceability, and acousticness are available but not used in the current scoring rule.
 
 ---
 
@@ -32,7 +32,7 @@ The system clearly rewards exact genre and mood matches. In the tested Chill Lof
 
 ## 6. Observed Behavior and Bias
 
-The catalog is sparse: 13 of its 15 genres and 11 of its 14 moods appear only once, so many preferences have few matching choices. The 2-point genre bonus can outweigh energy similarity, which contributes at most 1 point for the tested energy range. Songs without the preferred genre or mood still entered the high-energy profiles' top five; for example, Neon Mirage ranked fifth for Pop and third for Rock because its energy is close to 0.90. This may limit variety and make recommendations depend heavily on the categories represented in this small dataset.
+The catalog is sparse: 13 of its 15 genres and 11 of its 14 moods appear only once, so many preferences have few matching choices. The 2-point genre bonus can outweigh the individual similarity terms. Songs without the preferred genre or mood still enter the high-energy profiles' top five; this reflects their strong energy and advanced-feature contributions, and may limit variety. Popularity and categorical bonuses are simple hand-set rules, not learned preferences.
 
 ---
 
@@ -40,13 +40,13 @@ The catalog is sparse: 13 of its 15 genres and 11 of its 14 moods appear only on
 
 I ran three profiles against the same song catalog:
 
-- **High-Energy Pop:** pop, happy, target energy 0.90. Top five: Sunrise City (3.92), Gym Hero (2.97), Rooftop Lights (1.86), Storm Runner (0.99), Neon Mirage (0.98).
-- **Chill Lofi:** lofi, chill, target energy 0.40. Top five: Midnight Coding (3.98), Library Rain (3.95), Focus Flow (3.00), Spacewalk Thoughts (1.88), Lunar Postcard (0.98).
-- **Deep Intense Rock:** rock, intense, target energy 0.90. Top five: Storm Runner (3.99), Gym Hero (1.97), Neon Mirage (0.98), Glass Cathedral (0.94), Sunrise City (0.92).
+- **High-Energy Pop:** pop, happy, target energy 0.90, popularity 80, 2020s, euphoric, instrumentalness 0.05, speechiness 0.05. Top five: Sunrise City (5.90), Gym Hero (4.32), Rooftop Lights (3.20), Neon Mirage (2.31), Concrete Bloom (2.27).
+- **Chill Lofi:** lofi, chill, target energy 0.40, popularity 55, 2020s, cozy, instrumentalness 0.20, speechiness 0.04. Top five: Midnight Coding (5.96), Library Rain (5.30), Focus Flow (4.33), Spacewalk Thoughts (2.60), Coffee Shop Stories (1.93).
+- **Deep Intense Rock:** rock, intense, target energy 0.90, popularity 65, 2020s, defiant, instrumentalness 0.05, speechiness 0.06. Top five: Storm Runner (5.55), Gym Hero (3.27), Glass Cathedral (2.31), Neon Mirage (2.25), Sunrise City (2.23).
 
-Pop and Chill Lofi share no songs in their top five. Pop and Deep Intense Rock share four: Storm Runner, Gym Hero, Neon Mirage, and Sunrise City. Chill Lofi and Deep Intense Rock share none. The Pop and Rock overlap fits their shared 0.90 energy target. Their category preferences still affect the top spot: Sunrise City matches Pop and happy for Pop, while Storm Runner matches rock and intense for Rock. A surprising result is that songs matching neither category can still rank highly when their energy is close to the target.
+Pop and Chill Lofi share no songs in their top five. Pop and Deep Intense Rock share three: Gym Hero, Neon Mirage, and Sunrise City. Chill Lofi and Deep Intense Rock share none. The Pop and Rock overlap fits their shared 0.90 energy target and shared 2020s preference. Their category preferences still affect the top spot: Sunrise City matches Pop, happy, and euphoric for Pop, while Storm Runner matches rock, intense, and defiant for Rock.
 
-In the Weight Shift experiment, the original weights were genre +2, mood +1, and energy similarity multiplied by 1. The experimental weights were genre +1, mood +1, and energy similarity multiplied by 2. No song changed position in any profile's top five, but scores changed: Pop's Rooftop Lights went from 1.86 to 2.72, and Sunrise City went from 3.92 to 3.84. The experiment was different, but the results do not show that it was better. After restoring the original weights, I ran the recommender again and confirmed that the original top-five lists and scores returned.
+The earlier Weight Shift experiment used the genre/mood/energy-only scorer, before the five advanced features were added. It changed the genre weight from +2 to +1 and energy similarity from x1 to x2. No song changed position in any profile's top five, but scores changed: Pop's Rooftop Lights went from 1.86 to 2.72, and Sunrise City went from 3.92 to 3.84. The experiment was different, but the results do not show that it was better. After restoring the original weights, I ran the recommender again and confirmed that the original top-five lists and scores returned.
 
 ---
 
@@ -60,7 +60,7 @@ In the Weight Shift experiment, the original weights were genre +2, mood +1, and
 
 ## 9. Personal Reflection
 
-One of my biggest learning moments was seeing how the weights shape recommendations: a genre match adds two points, mood adds one, and energy similarity adds at most one. In Phase 4, doubling the energy weight and lowering the genre weight changed some scores, but did not change the top-five order for any of the three profiles. That showed me how a system can seem personalized while still following a small set of simple rules.
+One of my biggest learning moments was seeing how weights shape recommendations: the original genre, mood, and energy contributions remain, and five additional simulated features now add up to two points. This demonstrated how new signals can change ranks and make the reasons more detailed, while still following simple hand-set rules.
 
 I used an AI coding assistant to help me understand the scoring behavior and organize the model-card documentation. I still needed to check suggestions against the scorer, song data, and actual terminal output, especially when verifying scores and whether the ranking changed. I was surprised that songs with no genre or mood match could still reach a top five because their energy was close to the target.
 
