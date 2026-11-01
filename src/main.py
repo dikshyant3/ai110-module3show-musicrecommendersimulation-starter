@@ -10,11 +10,57 @@ You will implement the functions in recommender.py:
 """
 
 import argparse
+import textwrap
+from typing import Dict, List, Tuple
 
 if __package__:
     from .recommender import load_songs, recommend_songs
 else:
     from recommender import load_songs, recommend_songs
+
+
+def _format_recommendation_table(
+    recommendations: List[Tuple[Dict, float, str]]
+) -> str:
+    headers = ("Rank", "Song Title", "Artist", "Final Score", "Recommendation Reasons")
+    rows = [
+        (
+            str(rank),
+            song["title"],
+            song["artist"],
+            f"{score:.2f}",
+            [
+                line
+                for reason in explanation.split("; ")
+                for line in textwrap.wrap(reason, width=55) or [""]
+            ],
+        )
+        for rank, (song, score, explanation) in enumerate(recommendations, start=1)
+    ]
+    widths = [
+        max(len(headers[index]), *(len(row[index]) for row in rows))
+        for index in range(len(headers) - 1)
+    ]
+    widths.append(
+        max(len(headers[-1]), *(len(line) for row in rows for line in row[-1]))
+    )
+
+    def format_row(row: Tuple[str, ...]) -> str:
+        return "| " + " | ".join(
+            value.ljust(widths[index]) for index, value in enumerate(row)
+        ) + " |"
+
+    separator = "+-" + "-+-".join("-" * width for width in widths) + "-+"
+    table_lines = [separator, format_row(headers), separator]
+    for row in rows:
+        reason_lines = row[4]
+        table_lines.append(format_row((*row[:4], reason_lines[0])))
+        table_lines.extend(
+            format_row(("", "", "", "", reason_line))
+            for reason_line in reason_lines[1:]
+        )
+    table_lines.append(separator)
+    return "\n".join(table_lines)
 
 
 def main() -> None:
@@ -80,12 +126,8 @@ def main() -> None:
             f"({user_prefs['favorite_genre']} / {user_prefs['favorite_mood']}, "
             f"target energy: {user_prefs['target_energy']:.2f}):\n"
         )
-        for rank, (song, score, explanation) in enumerate(recommendations, start=1):
-            print(f"{rank}. {song['title']} (score: {score:.2f})")
-            print("   Reasons:")
-            for reason in explanation.split("; "):
-                print(f"   - {reason}")
-            print()
+        print(_format_recommendation_table(recommendations))
+        print()
 
 
 if __name__ == "__main__":
